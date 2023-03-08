@@ -1,10 +1,10 @@
 import Model from "./model.js";
 import showMessage from "./message.js";
-import randomSelection from "./utils.js";
+import { randomSelection } from "./utils.js";
 import tools from "./tools.js";
 
-function loadWidget(config) {
-    const model = new Model(config);
+function loadWidget(waifuPath, modelPath, choosedTools) {
+    const model = new Model(modelPath);
     localStorage.removeItem("waifu-display");
     sessionStorage.removeItem("waifu-text");
     document.body.insertAdjacentHTML("beforeend", `<div id="waifu">
@@ -20,10 +20,10 @@ function loadWidget(config) {
     (function registerTools() {
         tools["switch-model"].callback = () => model.loadOtherModel();
         tools["switch-texture"].callback = () => model.loadRandModel();
-        if (!Array.isArray(config.tools)) {
-            config.tools = Object.keys(tools);
+        if (!Array.isArray(choosedTools)) {
+            choosedTools = Object.keys(tools);
         }
-        for (let tool of config.tools) {
+        for (let tool of choosedTools) {
             if (tools[tool]) {
                 const { icon, callback } = tools[tool];
                 document.getElementById("waifu-tool").insertAdjacentHTML("beforeend", `<span id="waifu-tool-${tool}">${icon}</span>`);
@@ -132,22 +132,16 @@ function loadWidget(config) {
         if (modelId === null) {
             // 首次访问加载 指定模型 的 指定材质
             modelId = 1; // 模型 ID
-            modelTexturesId = 53; // 材质 ID
+            modelTexturesId = 1; // 材质 ID
         }
         model.loadModel(modelId, modelTexturesId);
-        fetch(config.waifuPath)
+        fetch(waifuPath)
             .then(response => response.json())
             .then(registerEventListener);
     })();
 }
 
-function initWidget(config, apiPath) {
-    if (typeof config === "string") {
-        config = {
-            waifuPath: config,
-            apiPath
-        };
-    }
+function initWidget(waifuPath, modelPath, choosedTools) {
     document.body.insertAdjacentHTML("beforeend", `<div id="waifu-toggle">
             <span>看板娘</span>
         </div>`);
@@ -155,7 +149,7 @@ function initWidget(config, apiPath) {
     toggle.addEventListener("click", () => {
         toggle.classList.remove("waifu-toggle-active");
         if (toggle.getAttribute("first-time")) {
-            loadWidget(config);
+            loadWidget(waifuPath, modelPath, choosedTools);
             toggle.removeAttribute("first-time");
         } else {
             localStorage.removeItem("waifu-display");
@@ -171,7 +165,7 @@ function initWidget(config, apiPath) {
             toggle.classList.add("waifu-toggle-active");
         }, 0);
     } else {
-        loadWidget(config);
+        loadWidget(waifuPath, modelPath, choosedTools);
     }
 }
 
